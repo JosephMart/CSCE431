@@ -1,0 +1,21 @@
+-#  This file is app/views/movies/index.html.haml
+%h1 All Movies
+
+%table#movies
+  %thead
+    %tr
+      %th{:class => @title_class}
+        %a{:href => "?title=asc", :id => "title_header"} Movie Titles
+      %th Rating
+      %th{:class => @date_class}
+        %a{:href => "?date=asc", :id => "release_date_header"} Release Date
+      %th More Info
+  %tbody
+    - @movies.each do |movie|
+      %tr
+        %td= movie.title 
+        %td= movie.rating
+        %td= movie.release_date
+        %td= link_to "More about #{movie.title}", movie_path(movie)
+
+= link_to 'Add new movie', new_movie_path
