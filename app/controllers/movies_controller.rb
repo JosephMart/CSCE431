@@ -13,19 +13,42 @@ class MoviesController < ApplicationController
   def index
     @date_class = ''
     @title_class = ''
-    # @all_ratings = Movie.all_ratings
     @all_ratings = Movie.ratings
-    @selected_ratings = params.key?("ratings") ? params["ratings"].keys : @all_ratings
 
-    if params.key?("title")
-      @movies = Movie.order("title " + params['title'])
+    @selected_ratings = if params.key?("ratings") and params["ratings"].keys.length.positive?
+                          params["ratings"].keys
+                        elsif session.key?("ratings") and session["ratings"].keys.length.positive?
+                          session["ratings"].keys
+                        else
+                          @all_ratings
+                        end
+    session['ratings'] = Hash[@selected_ratings.map {|r| [r, r]}]
+
+    # @selected_ratings = params.key?("ratings") ? params["ratings"].keys : @all_ratings
+
+    if (params.key?('title') || session.key?('title')) && !(params.key?('date'))
+      @order = 'title asc'
       @title_class = 'hilite'
-    elsif params.key?("date")
-      @movies = Movie.order("release_date " + params['date'])
+      session.delete(:date)
+      session[:title] = params['title']
+    elsif params.key?('date') || session.key?('date')
+      @order = 'release_date asc'
       @date_class = 'hilite'
-    else
-      @movies = Movie.where(rating: @selected_ratings)
+      session.delete(:title)
+      session[:date] = params['date']
     end
+
+    if params[:title] != session[:title] || params[:ratings] != session[:ratings] || params[:date] != session[:date]
+      if session.key?('title')
+        redirect_to :title => 'asc', :ratings => session['ratings']
+      elsif session.key?('date')
+        redirect_to :date => 'asc', :ratings => session['ratings']
+      else
+        redirect_to :ratings => session['ratings']
+      end
+      return
+    end
+    @movies = Movie.where(rating: @selected_ratings).order(@order)
   end
 
   def new
